@@ -1,8 +1,11 @@
 // main.dart
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:http/http.dart' as http;
+import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const ArgusScanApp());
@@ -15,11 +18,9 @@ class ArgusScanApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ArgusScan',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: AppTheme.lightTheme,
       home: const HomeScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -108,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         
         for (var camera in cameras) {
           try {
-            final response = await http.get(Uri.parse(camera!), timeout: const Duration(seconds: 3));
+            final response = await http.get(Uri.parse(camera!)).timeout(const Duration(seconds: 3));
             if (response.statusCode == 200) {
               accessible++;
             }
