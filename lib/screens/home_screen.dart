@@ -232,6 +232,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               filled: true,
               fillColor: Theme.of(context).colorScheme.surface,
             ),
+            value: selectedCountry.isEmpty ? null : selectedCountry,
+            hint: const Text('Choose a country'),
+            isExpanded: true,
             items: countries.map((country) {
               return DropdownMenuItem<String>(
                 value: country['code'],
@@ -241,7 +244,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               );
             }).toList(),
-            onChanged: (value) => setState(() => selectedCountry = value!),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => selectedCountry = value);
+              }
+            },
           ),
           const SizedBox(height: 16),
           Row(
