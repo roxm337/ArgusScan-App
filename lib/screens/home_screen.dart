@@ -12,7 +12,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final CameraService _cameraService = CameraService();
   List<Map<String, dynamic>> countries = [];
   List<String> cameras = [];
@@ -31,7 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
   }
 
   @override
@@ -48,7 +50,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     try {
       final result = await _cameraService.fetchCountries();
       setState(() {
-        countries = result;
+        countries = result?.entries
+                .map((e) => {
+                      'code': e.key,
+                      'name': e.value['country'],
+                      'count': e.value['count'],
+                    })
+                .toList() ??
+            [];
         statusMessage = '';
       });
     } catch (e) {
@@ -71,7 +80,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     });
 
     try {
-      final foundCameras = await _cameraService.scanCameras(selectedCountry, maxPages);
+      final foundCameras =
+          await _cameraService.scanCameras(selectedCountry, maxPages: maxPages);
       setState(() {
         cameras = foundCameras;
         statusMessage = 'Found ${cameras.length} accessible cameras';
@@ -118,7 +128,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               floating: false,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
-                title: const Text('ArgusScan'),
+                title: Padding(
+                    padding: const EdgeInsets.only(left: 30),
+                    child: Text('ArgusScan')),
                 background: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -218,8 +230,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Text(
             'Find Cameras',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
@@ -228,7 +240,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               filled: true,
               fillColor: Theme.of(context).colorScheme.surface,
             ),
@@ -260,7 +273,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
                   ),
@@ -333,7 +347,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
                       ),
                     ),
                   ],
