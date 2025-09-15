@@ -1,179 +1,200 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'dart:async';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CameraService {
-  static const String baseUrl = 'http://www.insecam.org/en';
+  static const String baseUrl = 'http://www.insecam.org';
+  static const String countriesUrl = 'http://www.insecam.org/en/jsoncountries/';
   static const Map<String, String> headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept':
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Cache-Control': 'max-age=0',
     'Connection': 'keep-alive',
+    'Host': 'www.insecam.org',
     'Upgrade-Insecure-Requests': '1',
+    'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
   };
 
-  // Local country data
-  static const Map<String, dynamic> localCountriesData = {
-    "status": "success",
-    "countries": {
-      "US": {"country": "United States", "count": 754},
-      "JP": {"country": "Japan", "count": 454},
-      "IT": {"country": "Italy", "count": 176},
-      "DE": {"country": "Germany", "count": 155},
-      "RU": {"country": "Russian Federation", "count": 99},
-      "FR": {"country": "France", "count": 92},
-      "AT": {"country": "Austria", "count": 85},
-      "CZ": {"country": "Czech Republic", "count": 77},
-      "KR": {"country": "Korea, Republic Of", "count": 58},
-      "TW": {"country": "Taiwan, Province Of ", "count": 49},
-      "CH": {"country": "Switzerland", "count": 49},
-      "NO": {"country": "Norway", "count": 44},
-      "RO": {"country": "Romania", "count": 41},
-      "CA": {"country": "Canada", "count": 39},
-      "NL": {"country": "Netherlands", "count": 37},
-      "ES": {"country": "Spain", "count": 36},
-      "PL": {"country": "Poland", "count": 35},
-      "GB": {"country": "United Kingdom", "count": 33},
-      "SE": {"country": "Sweden", "count": 29},
-      "BG": {"country": "Bulgaria", "count": 21},
-      "DK": {"country": "Denmark", "count": 18},
-      "BE": {"country": "Belgium", "count": 16},
-      "RS": {"country": "Serbia", "count": 14},
-      "IN": {"country": "India", "count": 10},
-      "UA": {"country": "Ukraine", "count": 10},
-      "ZA": {"country": "South Africa", "count": 10},
-      "VN": {"country": "Viet Nam", "count": 10},
-      "FI": {"country": "Finland", "count": 9},
-      "SK": {"country": "Slovakia", "count": 8},
-      "TR": {"country": "Turkey", "count": 8},
-      "-": {"country": "-", "count": 8},
-      "GR": {"country": "Greece", "count": 8},
-      "BR": {"country": "Brazil", "count": 8},
-      "ID": {"country": "Indonesia", "count": 8},
-      "HU": {"country": "Hungary", "count": 8},
-      "MX": {"country": "Mexico", "count": 7},
-      "BA": {"country": "Bosnia And Herzegovina", "count": 7},
-      "TH": {"country": "Thailand", "count": 6},
-      "AU": {"country": "Australia", "count": 6},
-      "IL": {"country": "Israel", "count": 6},
-      "HK": {"country": "Hong Kong", "count": 5},
-      "AR": {"country": "Argentina", "count": 5},
-      "MY": {"country": "Malaysia", "count": 4},
-      "MD": {"country": "Moldova, Republic Of", "count": 4},
-      "SI": {"country": "Slovenia", "count": 4},
-      "SY": {"country": "Syria", "count": 4},
-      "LT": {"country": "Lithuania", "count": 4},
-      "EE": {"country": "Estonia", "count": 4},
-      "NZ": {"country": "New Zealand", "count": 4},
-      "IE": {"country": "Ireland", "count": 4},
-      "EC": {"country": "Ecuador", "count": 4},
-      "CL": {"country": "Chile", "count": 4},
-      "IR": {"country": "Iran, Islamic Republic", "count": 3},
-      "KZ": {"country": "Kazakhstan", "count": 3},
-      "CN": {"country": "China", "count": 3},
-      "NI": {"country": "Nicaragua", "count": 2},
-      "BY": {"country": "Belarus", "count": 2},
-      "ME": {"country": "Montenegro", "count": 2},
-      "IS": {"country": "Iceland", "count": 2},
-      "FO": {"country": "Faroe Islands", "count": 2},
-      "HN": {"country": "Honduras", "count": 2},
-      "CO": {"country": "Colombia", "count": 2},
-      "PE": {"country": "Peru", "count": 1},
-      "DO": {"country": "Dominican Republic", "count": 1},
-      "PA": {"country": "Panama", "count": 1},
-      "CY": {"country": "Cyprus", "count": 1},
-      "NC": {"country": "New Caledonia", "count": 1},
-      "AO": {"country": "Angola", "count": 1},
-      "NG": {"country": "Nigeria", "count": 1},
-      "GU": {"country": "Guam", "count": 1},
-      "LU": {"country": "Luxembourg", "count": 1},
-      "GE": {"country": "Georgia", "count": 1},
-      "PH": {"country": "Philippines", "count": 1},
-      "LA": {"country": "Laos", "count": 1},
-      "TN": {"country": "Tunisia", "count": 1},
-      "AM": {"country": "Armenia", "count": 1},
-      "TZ": {"country": "Tanzania", "count": 1}
-    }
-  };
-
-  Future<List<Map<String, dynamic>>> fetchCountries() async {
+  Future<bool> testNetworkConnectivity() async {
     try {
-      final countries = localCountriesData['countries'] as Map<String, dynamic>;
-      return countries.entries.map((e) => {
-        'code': e.key,
-        'name': e.value['country'],
-        'count': e.value['count']
-      }).toList();
-    } catch (e) {
-      print('Error processing countries: $e');
-      throw Exception('Error processing countries: $e');
-    }
-  }
+      print('Testing network connectivity...');
 
-  Future<List<String>> scanCameras(String countryCode, int maxPages) async {
-    List<String> cameras = [];
-    List<String> accessibleCameras = [];
-    
-    // Get the country's camera count from local data
-    final countryData = localCountriesData['countries'][countryCode];
-    if (countryData == null) {
-      print('Country not found: $countryCode');
-      return [];
-    }
+      // Use dio for cross-platform network testing
+      final dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 5);
+      dio.options.receiveTimeout = const Duration(seconds: 5);
+      dio.options.headers = headers;
 
-    print('Scanning for cameras in $countryCode (expected count: ${countryData['count']})');
-    
-    // Fetch cameras from the URL
-    for (int page = 0; page < maxPages; page++) {
       try {
-        final response = await http.get(
-          Uri.parse('$baseUrl/bycountry/$countryCode/?page=$page'),
-          headers: headers,
-        );
-
-        if (response.statusCode == 200) {
-          // Extract camera URLs from the response
-          final regex = RegExp(r"http://\d+\.\d+\.\d+\.\d+:\d+");
-          final matches = regex.allMatches(response.body);
-          cameras.addAll(matches.map((m) => m.group(0)!).toList());
-          print('Found ${matches.length} cameras on page $page');
-        }
+        final response = await dio.get(baseUrl);
+        print('Network response status: ${response.statusCode}');
+        return response.statusCode == 200;
       } catch (e) {
-        print('Error scanning page $page: $e');
-      }
-    }
-
-    print('Found total of ${cameras.length} cameras, checking accessibility...');
-
-    // Check accessibility of each camera
-    for (var camera in cameras) {
-      try {
-        final response = await http.get(
-          Uri.parse(camera),
-          headers: headers,
-        ).timeout(const Duration(seconds: 3));
-        
-        if (response.statusCode == 200) {
-          accessibleCameras.add(camera);
-          print('Found accessible camera: $camera');
+        print('Network request failed: $e');
+        if (e is DioException) {
+          print('Dio error type: ${e.type}');
+          print('Dio error message: ${e.message}');
         }
-      } catch (_) {
-        // Skip inaccessible cameras
       }
-    }
-    
-    print('Found ${accessibleCameras.length} accessible cameras');
-    return accessibleCameras;
-  }
 
-  Future<bool> testCameraAccessibility(String cameraUrl) async {
-    try {
-      final response = await http.get(
-        Uri.parse(cameraUrl),
-        headers: headers,
-      ).timeout(const Duration(seconds: 3));
-      return response.statusCode == 200;
-    } catch (_) {
+      return false;
+    } catch (e) {
+      print('Error testing network connectivity: $e');
       return false;
     }
   }
-} 
+
+  Future<Map<String, dynamic>?> fetchCountries() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(countriesUrl),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['countries'];
+      }
+      print('Error fetching countries: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      print('Error fetching countries: $e');
+      return null;
+    }
+  }
+
+  Future<List<String>> scanCameras(String countryCode, {int? maxPages}) async {
+    try {
+      // Get first page to determine total pages
+      final firstPageUrl = '$baseUrl/en/bycountry/$countryCode';
+      final response = await http
+          .get(
+            Uri.parse(firstPageUrl),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        print('Error accessing country page: ${response.statusCode}');
+        return [];
+      }
+
+      // Extract total pages using regex
+      final pageRegex = RegExp(r'pagenavigator\("\?page=", (\d+)');
+      final match = pageRegex.firstMatch(response.body);
+      if (match == null) {
+        print('No cameras found for this country.');
+        return [];
+      }
+
+      int totalPages = int.parse(match.group(1)!);
+      if (maxPages != null && maxPages < totalPages) {
+        totalPages = maxPages;
+      }
+
+      print('Found $totalPages pages to scan...');
+
+      // Use Future.wait for parallel processing
+      final futures = List.generate(
+          totalPages + 1, (page) => fetchPageUrls(countryCode, page));
+
+      final results = await Future.wait(futures);
+      final allUrls = results.expand((urls) => urls).toList();
+
+      print('Found ${allUrls.length} total cameras');
+      return allUrls;
+    } catch (e) {
+      print('Error scanning cameras: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchPageUrls(String countryCode, int page) async {
+    try {
+      final url = '$baseUrl/en/bycountry/$countryCode/?page=$page';
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final regex = RegExp(r"http://\d+\.\d+\.\d+\.\d+:\d+");
+        return regex.allMatches(response.body).map((m) => m.group(0)!).toList();
+      }
+      print('Error fetching page $page: ${response.statusCode}');
+      return [];
+    } catch (e) {
+      print('Warning: Error fetching page $page: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> testCameraAccessibility(List<String> urls,
+      {bool verbose = false}) async {
+    print('\nTesting camera accessibility...');
+    final accessible = <String>[];
+
+    // Use Future.wait for parallel processing
+    final futures = urls.map((url) => checkCamera(url, verbose));
+    final results = await Future.wait(futures);
+
+    for (var i = 0; i < urls.length; i++) {
+      if (results[i]) {
+        accessible.add(urls[i]);
+      }
+    }
+
+    print('Found ${accessible.length} accessible cameras');
+    return accessible;
+  }
+
+  Future<bool> checkCamera(String url, bool verbose) async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 5));
+
+      final isAccessible = response.statusCode == 200;
+      if (verbose) {
+        print(isAccessible
+            ? '[+] $url - Accessible'
+            : '[-] $url - Not accessible');
+      }
+      return isAccessible;
+    } catch (e) {
+      if (verbose) {
+        print('[-] $url - Not accessible');
+      }
+      return false;
+    }
+  }
+
+  Future<void> saveToFile(List<String> urls, String filename) async {
+    try {
+      final content = urls.join('\n');
+
+      // For mobile platforms, save to device storage and share
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$filename');
+      await file.writeAsString(content);
+
+      // Share the file
+      await Share.shareXFiles([XFile(file.path)], text: 'Camera URLs');
+      print('Saved ${urls.length} URLs to $filename and shared');
+    } catch (e) {
+      print('Error saving to file: $e');
+    }
+  }
+}
