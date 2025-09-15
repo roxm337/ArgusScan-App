@@ -4,11 +4,13 @@ A Flutter application for scanning and viewing camera feeds from various sources
 
 ## Screenshots
 
-![Screenshot 1](screens/1.png)
-![Screenshot 2](screens/2.png)
-![Screenshot 3](screens/3.png)
-![Screenshot 4](screens/4.png)
-![Screenshot 5](screens/5.png)
+<div align="center">
+  <img src="screens/1.png" width="200" alt="Screenshot 1">
+  <img src="screens/2.png" width="200" alt="Screenshot 2">
+  <img src="screens/3.png" width="200" alt="Screenshot 3">
+  <img src="screens/4.png" width="200" alt="Screenshot 4">
+  <img src="screens/5.png" width="200" alt="Screenshot 5">
+</div>
 
 ## Features
 
